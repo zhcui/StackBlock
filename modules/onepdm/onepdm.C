@@ -295,8 +295,10 @@ void compute_pair_1_1_0(StackWavefunction& wave1, StackWavefunction& wave2, cons
   for (int i = 0; i < leftBlock->get_op_array(CRE).get_size(); ++i)
   for (int j = 0; j < dotBlock->get_op_array(CRE).get_size(); ++j)
   {
-    boost::shared_ptr<StackSparseMatrix> op1 = leftBlock->get_op_array(CRE).get_local_element(i)[0]->getworkingrepresentation(leftBlock);//spin 0
-    boost::shared_ptr<StackSparseMatrix> op2 = dotBlock->get_op_array(CRE).get_local_element(j)[0]->getworkingrepresentation(dotBlock);//spin 0
+    //boost::shared_ptr<StackSparseMatrix> op1 = leftBlock->get_op_array(CRE).get_local_element(i)[0]->getworkingrepresentation(leftBlock);//spin 0
+    //boost::shared_ptr<StackSparseMatrix> op2 = dotBlock->get_op_array(CRE).get_local_element(j)[0]->getworkingrepresentation(dotBlock);//spin 0
+    boost::shared_ptr<StackSparseMatrix> op1 = leftBlock->get_op_array(CRE).get_local_element(i)[0];//spin 0
+    boost::shared_ptr<StackSparseMatrix> op2 = dotBlock->get_op_array(CRE).get_local_element(j)[0];//spin 0
     int ix = op1->get_orbs(0);
     int jx = op2->get_orbs(0);
 
@@ -334,7 +336,8 @@ void compute_pair_0_2(StackWavefunction& wave1, StackWavefunction& wave2, const 
   StackSpinBlock* rightBlock = big.get_rightBlock();
 
   for (int ij = 0; ij < rightBlock->get_op_array(CRE_CRE).get_size(); ++ij) {
-    boost::shared_ptr<StackSparseMatrix> op = rightBlock->get_op_array(CRE_CRE).get_local_element(ij)[0]->getworkingrepresentation(rightBlock);
+    //boost::shared_ptr<StackSparseMatrix> op = rightBlock->get_op_array(CRE_CRE).get_local_element(ij)[0]->getworkingrepresentation(rightBlock);
+    boost::shared_ptr<StackSparseMatrix> op = rightBlock->get_op_array(CRE_CRE).get_local_element(ij)[0];
     int ix = op->get_orbs(0);
     int jx = op->get_orbs(1);
 
@@ -363,7 +366,8 @@ void compute_pair_2_0_0(StackWavefunction& wave1, StackWavefunction& wave2, cons
   StackSpinBlock* dotBlock = big.get_leftBlock()->get_rightBlock();
 
   for (int ij = 0; ij < leftBlock->get_op_array(CRE_CRE).get_size(); ++ij) {
-    boost::shared_ptr<StackSparseMatrix> op = leftBlock->get_op_array(CRE_CRE).get_local_element(ij)[0]->getworkingrepresentation(leftBlock);//spin 0
+    //boost::shared_ptr<StackSparseMatrix> op = leftBlock->get_op_array(CRE_CRE).get_local_element(ij)[0]->getworkingrepresentation(leftBlock);//spin 0
+    boost::shared_ptr<StackSparseMatrix> op = leftBlock->get_op_array(CRE_CRE).get_local_element(ij)[0];//spin 0
     int ix = op->get_orbs(0);
     int jx = op->get_orbs(1);
 
@@ -399,10 +403,12 @@ void compute_pair_1_1(StackWavefunction& wave1, StackWavefunction& wave2, const 
   StackSpinBlock* rightBlock = big.get_rightBlock();
 
   for (int j = 0; j < rightBlock->get_op_array(CRE).get_size(); ++j) {
-    boost::shared_ptr<StackSparseMatrix> op2 = rightBlock->get_op_array(CRE).get_local_element(j)[0]->getworkingrepresentation(rightBlock);
+    //boost::shared_ptr<StackSparseMatrix> op2 = rightBlock->get_op_array(CRE).get_local_element(j)[0]->getworkingrepresentation(rightBlock);
+    boost::shared_ptr<StackSparseMatrix> op2 = rightBlock->get_op_array(CRE).get_local_element(j)[0];
     int jx = op2->get_orbs(0);
     for (int i = 0; i < leftBlock->get_op_array(CRE).get_size(); ++i) {
-      boost::shared_ptr<StackSparseMatrix> op1 = leftBlock->get_op_array(CRE).get_local_element(i)[0]->getworkingrepresentation(leftBlock);
+      //boost::shared_ptr<StackSparseMatrix> op1 = leftBlock->get_op_array(CRE).get_local_element(i)[0]->getworkingrepresentation(leftBlock);
+      boost::shared_ptr<StackSparseMatrix> op1 = leftBlock->get_op_array(CRE).get_local_element(i)[0];
       int ix = op1->get_orbs(0);
 
       vector<SpinQuantum> opQ = -op1->get_deltaQuantum(0)-op2->get_deltaQuantum(0);
