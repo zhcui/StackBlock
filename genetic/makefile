@@ -1,9 +1,11 @@
 CXX=mpic++
 CXXFLAGS=-g -O3 -fPIC
 
-BOOSTDIR=/usr
+BOOSTDIR=/usr/local/apps/gcc-5.4.0/boost_1_55_0
 BOOSTINCLUDE=$(BOOSTDIR)/include
-BOOSTLIB=-L$(BOOSTDIR)/lib
+BOOSTLIB=-L$(BOOSTDIR)/lib -lboost_system-mt -lboost_filesystem-mt -lboost_serialization-mt
+#BOOSTINCLUDE = /usr/local/apps/gcc-5.4.0/boost_1_55_0/include
+#BOOSTLIB = -L/usr/local/apps/gcc-5.4.0/boost_1_55_0/lib  -lboost_system-mt -lboost_filesystem-mt -lboost_serialization-mt
 
 NEWMATLIB=../newmat10
 

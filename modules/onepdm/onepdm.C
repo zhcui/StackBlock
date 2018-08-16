@@ -283,7 +283,7 @@ void compute_one_pdm_0_2(StackWavefunction& wave1, StackWavefunction& wave2, con
   }
 }
 
-  /*
+//  /*
 void compute_pair_1_1_0(StackWavefunction& wave1, StackWavefunction& wave2, const StackSpinBlock& big, Matrix& onepdm) {
   StackSpinBlock* leftBlock = big.get_leftBlock()->get_leftBlock();
   StackSpinBlock* rightBlock = big.get_rightBlock();
@@ -420,7 +420,7 @@ void compute_pair_1_1(StackWavefunction& wave1, StackWavefunction& wave2, const 
     }
   }
 }
-  */
+//  */
 
 void accumulate_onepdm(Matrix& onepdm)
 {

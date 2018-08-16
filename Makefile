@@ -3,47 +3,68 @@
 #This program is integrated in Molpro with the permission of 
 #Sandeep Sharma and Garnet K.-L. Chan
 
-##BOOSTINCLUDE = /home/sandeep/Work/Programs/boost_1_54_0/
-#specify boost include file
-BOOSTINCLUDE = /home/sharma/apps/forServer/boost_1_53_0_mt/boost_1_53_0/
+######### GENERAL OPTIONS FOR USER #########
+
+# change to icpc for Intel
+CXX = g++
+MPICXX = mpic++
+export CXX
+export MPICXX
+
+# BOOST include directory
+#BOOSTINCLUDE = /home/sharma/apps/forServer/boost_1_53_0_mt/boost_1_53_0/
 #BOOSTINCLUDE = /home/sharma/apps/boost/boost_1_55_0/
+BOOSTINCLUDE = /usr/local/apps/gcc-5.4.0/boost_1_55_0/include
+BOOSTLIB = -L/usr/local/apps/gcc-5.4.0/boost_1_55_0/lib  -lboost_system-mt -lboost_filesystem-mt -lboost_serialization-mt
 
-#specify boost and lapack-blas library locations
-BOOSTLIB = -L/home/sharma/apps/forServer/boost_1_53_0_mt/boost_1_53_0/stage/lib -lboost_serialization -lboost_system -lboost_filesystem 
-#BOOSTLIB = -L/home/sharma/apps/boost/boost_1_55_0/stage/lib -lboost_serialization -lboost_system -lboost_filesystem 
-#BOOSTLIB = -lboost_serialization -lboost_system -lboost_filesystem
-LAPACKBLAS = -lblas -llapack
-MALLOC = #-L/home/sharma/apps/forServer/tcalloc/tcalloc_install/lib -ltcmalloc
-
+# set to yes if using BOOST version >= 1.56.0
 USE_BOOST56 = no
 ifeq ($(USE_BOOST56), yes)
 	B56 = -DBOOST_1_56_0
 endif
 
-#use these variable to set if we will use mpi or not 
-USE_MPI = yes
-USE_MKL = yes
+# BOOST and LAPACK/BLAS linker 
+#BOOSTLIB = -L/home/sharma/apps/forServer/boost_1_53_0_mt/boost_1_53_0/stage/lib -lboost_serialization -lboost_system -lboost_filesystem
+#BOOSTLIB = -L/home/sharma/apps/boost/boost_1_55_0/stage/lib -lboost_serialization -lboost_system -lboost_filesystem 
+#BOOSTLIB = -lboost_serialization -lboost_system -lboost_filesystem
 
-# use this variable to set if we will use integer size of 8 or not.
-# molpro compilation requires I8, since their integers are long
-I8_OPT = no
-MOLPRO = no
+#LAPACKBLAS = -lblas -llapack
+#LAPACKBLAS =    /usr/lib/liblapack.dylib /usr/lib/libblas.dylib
+
+# set if we will use MPI or OpenMP
+USE_MPI = yes
 OPENMP = yes
 
-DOPROF = no
+# FLAGS for linking in MKL
+USE_MKL = yes
+
+ifeq ($(USE_MKL), yes)
+MKLROOT = /usr/local/apps/intel/compilers_and_libraries_2017.0.098/linux/mkl
+LAPACKBLAS = -L${MKLROOT}/lib/intel64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core #-lrt #-liomp5 
+MKLFLAGS = ${MKLROOT}/include/
+MKLOPT = -D_HAS_INTEL_MKL
+else
+MKLFLAGS = .
+endif
+
+
+######### ADVANCED OPTIONS (GENERALLY THESE DO NOT NEED TO BE SET) #########
+
 
 # add Molcas interface to libqcdmrg.so
 # molcas compilation w/ -64 option requires I8 as well
 MOLCAS = no
 
-ifeq ($(USE_MKL), yes)
-MKLLIB = .
-LAPACKBLAS = -L${MKLLIB} -lmkl_gf_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lrt
-MKLFLAGS = /usr/local/server/IntelStudio_2015/mkl/include/
-MKLOPT = -D_HAS_INTEL_MKL
-else
-MKLFLAGS = .
-endif
+# Link to Molpro
+MOLPRO = no
+# use this variable to set if we will use integer size of 8 or not.
+# molpro compilation requires I8, since their integers are long
+I8_OPT = no
+
+# Optional MALLOC library 
+MALLOC = #-L/home/sharma/apps/forServer/tcalloc/tcalloc_install/lib -ltcmalloc
+
+DOPROF = no
 
 RUN_UNITTEST=no
 ifeq ($(RUN_UNITTEST), yes)
@@ -60,9 +81,6 @@ endif
 
 EXECUTABLE = block.spin_adapted
 
-# change to icpc for Intel
-CXX = icpc
-MPICXX = mpiicpc
 BLOCKHOME = .
 HOME = .
 NEWMATINCLUDE = $(BLOCKHOME)/newmat10/
@@ -72,7 +90,7 @@ NEWMATLIB = $(BLOCKHOME)/newmat10/
 BTAS = $(BLOCKHOME)/btas
 .SUFFIXES: .C .cpp
 
-   
+
 MOLPROINCLUDE=.
 ifeq ($(MOLPRO), yes)
    MOLPROINCLUDE=$(BLOCKHOME)/../
@@ -85,7 +103,7 @@ FLAGS =  -I${MKLFLAGS} -I$(INCLUDE1) -I$(INCLUDE2) -I$(NEWMATINCLUDE) -I$(BOOSTI
          -I$(HOME)/modules/npdm -I$(HOME)/modules/two_index_ops -I$(HOME)/modules/three_index_ops -I$(HOME)/modules/four_index_ops -std=c++0x \
 	 -I$(HOME)/modules/ResponseTheory -I$(HOME)/modules/nevpt2 -I$(HOME)/molcas
 
-LIBS +=  -L$(NEWMATLIB) -lnewmat $(BOOSTLIB) $(LAPACKBLAS) $(MALLOC)
+LIBS +=  -L$(NEWMATLIB) -lnewmat $(BOOSTLIB) $(LAPACKBLAS) $(MALLOC) -lrt
 MPI_OPT = -DSERIAL
 
 
@@ -94,12 +112,12 @@ MPI_OPT = -DSERIAL
 ifeq (icpc, $(CXX))
    ifeq ($(OPENMP), yes)
       OPENMP_FLAGS= -openmp 
-	ifeq ($(USE_MPI), yes)
-	OPENMP_FLAGS += -lmpi_mt
-	endif
+	#ifeq ($(USE_MPI), yes)
+	#OPENMP_FLAGS += -lmpi_mt
+	#endif
    endif
 # Intel compiler
-  OPT = -DNDEBUG -O2 -g #-ipo
+  OPT = -DNDEBUG -O2 -g -funroll-loops #-ipo
 #  OPT = -g 
    ifeq ($(USE_MPI), no) 
       CXX = icpc
@@ -109,13 +127,21 @@ endif
 ifeq (g++, $(CXX))
    ifeq ($(OPENMP), yes)
       OPENMP_FLAGS= -fopenmp 
-	ifeq ($(USE_MPI), yes)
-	OPENMP_FLAGS += -lmpi
-	endif
+	#ifeq ($(USE_MPI), yes)
+	#OPENMP_FLAGS += -lmpi
+	#endif
    endif
 # GNU compiler
-   OPT = -DNDEBUG -O2 -g -funroll-loops
+   OPT = -DNDEBUG -O3 -g -funroll-loops
 #   OPT = -g -pg
+endif
+
+ifeq (clang++, $(CXX))
+   ifeq ($(OPENMP), yes)
+      OPENMP_FLAGS= -fopenmp #-D_OPENMP 
+   endif
+
+   OPT = -DNDEBUG -g -Werror -funroll-loops
 endif
 
 ifeq ($(DOPROF),yes)
@@ -130,7 +156,7 @@ ifeq ($(USE_MPI), yes)
 endif
 
 
-OPT	+= $(OPENMP_FLAGS) -DBLAS -DUSELAPACK $(MPI_OPT) $(I8) $(B56) $(MOLPRO_BLOCK)  -DFAST_MTP -D_HAS_CBLAS -D_HAS_INTEL_MKL ${MKLOPT} ${UNITTEST} 
+OPT	+= $(OPENMP_FLAGS) -DBLAS -DUSELAPACK $(MPI_OPT) $(I8) $(B56) $(MOLPRO_BLOCK)  -DFAST_MTP -D_HAS_CBLAS  ${MKLOPT} ${UNITTEST} 
 
 SRC_genetic = genetic/CrossOver.C genetic/Evaluate.C genetic/GAInput.C genetic/GAOptimize.C genetic/Generation.C genetic/Mutation.C genetic/RandomGenerator.C genetic/ReadIntegral.C
 
@@ -146,8 +172,11 @@ SRC_npdm = modules/npdm/npdm.C modules/npdm/npdm_driver.C modules/npdm/npdm_patt
 
 SRC_spin_adapted = saveBlock.C Stackspinblock.C operatorUtilities.C Stack_op_components.C stackguess_wavefunction.C Stackwavefunction.C Stackdensity.C stackopxop.C StackBaseOperator.C StackOperators.C modules/ResponseTheory/sweepResponse.C modules/ResponseTheory/sweepCompress.C pario.C dmrg.C fiedler.C least_squares.C sweep_mps.C set_stackspinblock_components.C linear.C main.C readinput.C  timer.C SpinQuantum.C Symmetry.C input.C hfOccGenerator.C Schedule.C orbstring.C slater.C csf.C StateInfo.C  screen.C MatrixBLAS.C operatorfunctions.C solver.C davidson.C sweep_params.C sweep.C partial_sweep.C BlockAndDecimate.C initblocks.C rotationmat.C renormalise.C couplingCoeffs.C distribute.C new_anglib.C fci.C IrrepSpace.C modules/generate_blocks/sweep.C $(SRC_genetic) SpinSpace.C include/IntegralMatrix.C modules/onepdm/sweep.C modules/onepdm/onepdm.C $(SRC_npdm) #modules/twopdm/sweep.C modules/twopdm/twopdm.C modules/twopdm/twopdm_2.C
 
-SRC_OH = wrapper.C fciqmchelper.C saveBlock.C Stackspinblock.C operatorUtilities.C Stack_op_components.C stackguess_wavefunction.C Stackwavefunction.C Stackdensity.C stackopxop.C StackBaseOperator.C StackOperators.C modules/ResponseTheory/sweepResponse.C modules/ResponseTheory/sweepCompress.C pario.C dmrg.C fiedler.C least_squares.C sweep_mps.C set_stackspinblock_components.C linear.C readinput.C  timer.C SpinQuantum.C Symmetry.C input.C hfOccGenerator.C Schedule.C orbstring.C slater.C csf.C StateInfo.C  screen.C MatrixBLAS.C operatorfunctions.C solver.C davidson.C sweep_params.C sweep.C partial_sweep.C BlockAndDecimate.C initblocks.C rotationmat.C renormalise.C couplingCoeffs.C distribute.C new_anglib.C fci.C IrrepSpace.C modules/generate_blocks/sweep.C $(SRC_genetic) SpinSpace.C include/IntegralMatrix.C modules/onepdm/sweep.C modules/onepdm/onepdm.C
+SRC_OH = wrapper.C fciqmchelper.C saveBlock.C Stackspinblock.C operatorUtilities.C Stack_op_components.C stackguess_wavefunction.C Stackwavefunction.C Stackdensity.C stackopxop.C StackBaseOperator.C StackOperators.C modules/ResponseTheory/sweepResponse.C modules/ResponseTheory/sweepCompress.C pario.C dmrg.C fiedler.C least_squares.C sweep_mps.C set_stackspinblock_components.C linear.C readinput.C  timer.C SpinQuantum.C Symmetry.C input.C hfOccGenerator.C Schedule.C orbstring.C slater.C csf.C StateInfo.C  screen.C MatrixBLAS.C operatorfunctions.C solver.C davidson.C sweep_params.C sweep.C partial_sweep.C BlockAndDecimate.C initblocks.C rotationmat.C renormalise.C couplingCoeffs.C distribute.C new_anglib.C fci.C IrrepSpace.C modules/generate_blocks/sweep.C $(SRC_genetic) SpinSpace.C include/IntegralMatrix.C modules/onepdm/sweep.C modules/onepdm/onepdm.C $(SRC_npdm)
 OBJ_OH= OverlapHelement.o
+
+SRC_READROTATION = saveBlock.C Stackspinblock.C operatorUtilities.C Stack_op_components.C stackguess_wavefunction.C Stackwavefunction.C Stackdensity.C stackopxop.C StackBaseOperator.C StackOperators.C modules/ResponseTheory/sweepResponse.C modules/ResponseTheory/sweepCompress.C pario.C dmrg.C fiedler.C least_squares.C sweep_mps.C set_stackspinblock_components.C linear.C readinput.C  timer.C SpinQuantum.C Symmetry.C input.C hfOccGenerator.C Schedule.C orbstring.C slater.C csf.C StateInfo.C  screen.C MatrixBLAS.C operatorfunctions.C solver.C davidson.C sweep_params.C sweep.C partial_sweep.C BlockAndDecimate.C initblocks.C rotationmat.C renormalise.C couplingCoeffs.C distribute.C new_anglib.C fci.C IrrepSpace.C modules/generate_blocks/sweep.C $(SRC_genetic) SpinSpace.C include/IntegralMatrix.C modules/onepdm/sweep.C modules/onepdm/onepdm.C $(SRC_npdm)
+OBJ_READROTATION= readrotationmatrix.o
 
 SRC_Applycd = wrapper.C fciqmchelper.C saveBlock.C Stackspinblock.C operatorUtilities.C Stack_op_components.C stackguess_wavefunction.C Stackwavefunction.C Stackdensity.C stackopxop.C StackBaseOperator.C StackOperators.C modules/ResponseTheory/sweepResponse.C modules/ResponseTheory/sweepCompress.C pario.C dmrg.C fiedler.C least_squares.C sweep_mps.C set_stackspinblock_components.C linear.C readinput.C  timer.C SpinQuantum.C Symmetry.C input.C hfOccGenerator.C Schedule.C orbstring.C slater.C csf.C StateInfo.C  screen.C MatrixBLAS.C operatorfunctions.C solver.C davidson.C sweep_params.C sweep.C partial_sweep.C BlockAndDecimate.C initblocks.C rotationmat.C renormalise.C couplingCoeffs.C distribute.C new_anglib.C fci.C IrrepSpace.C modules/generate_blocks/sweep.C $(SRC_genetic) SpinSpace.C include/IntegralMatrix.C modules/onepdm/sweep.C modules/onepdm/onepdm.C
 OBJ_Applycd= ApplyExcitation.o
@@ -175,6 +204,7 @@ SRC_nevpt2 = modules/nevpt2/nevpt2.C modules/nevpt2/nevpt2_info.C modules/nevpt2
 SRC_molcas = molcas/block_calldmrg.C molcas/molpro_fcidump.C molcas/loadNpdm.C molcas/sortNpdm.C molcas/tranNpdm.C
 
 OBJ_OH+=$(SRC_OH:.C=.o)
+OBJ_READROTATION+=$(SRC_READROTATION:.C=.o)
 OBJ_Applycd+=$(SRC_Applycd:.C=.o)
 OBJ_CSFOH+=$(SRC_CSFOH:.C=.o)
 OBJ_PTn+=$(SRC_PTn:.C=.o)
@@ -211,6 +241,9 @@ libqcdmrg.so : $(OBJ_spin_library) $(OBJ_molcas)
 
 OH : $(OBJ_OH) $(NEWMATLIB)/libnewmat.a
 	$(CXX)   $(FLAGS) $(OPT) -o  OH $(OBJ_OH) $(LIBS)
+
+READROTATION : $(OBJ_READROTATION) $(NEWMATLIB)/libnewmat.a
+	$(CXX)   $(FLAGS) $(OPT) -o  READROTATION $(OBJ_READROTATION) $(LIBS)
 
 Applycd : $(OBJ_Applycd) $(NEWMATLIB)/libnewmat.a
 	$(CXX)   $(FLAGS) $(OPT) -o  Applycd $(OBJ_Applycd) $(LIBS)

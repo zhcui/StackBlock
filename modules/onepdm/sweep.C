@@ -129,44 +129,44 @@ void SweepOnepdm::BlockAndDecimate (SweepParams &sweepParams, StackSpinBlock& sy
   Matrix onepdm;
   load_onepdm_binary(onepdm, state ,state);
   Matrix pairmat;
-  //if (dmrginp.hamiltonian() == BCS)
-  //load_pairmat_binary(pairmat, state ,state);
+  if (dmrginp.hamiltonian() == BCS)
+  load_pairmat_binary(pairmat, state ,state);
 
   if (sweepParams.get_block_iter() == 0) {
     //this is inface a combination of  2_0_0, 1_1_0 and 0_2_0
     p2out << "\t\t\t compute 2_0_0"<<endl;
     compute_one_pdm_2_0_0(solution[0], solution[0], big, onepdm);
-    //if (dmrginp.hamiltonian() == BCS)
-    //compute_pair_2_0_0(solution[0], solution[0], big, pairmat);
+    if (dmrginp.hamiltonian() == BCS)
+    compute_pair_2_0_0(solution[0], solution[0], big, pairmat);
     p2out << "\t\t\t compute 1_1_0"<<endl;
     compute_one_pdm_1_1_0(solution[0], solution[0], big, onepdm);
-    //if (dmrginp.hamiltonian() == BCS)    
-    //compute_pair_1_1_0(solution[0], solution[0], big, pairmat);
+    if (dmrginp.hamiltonian() == BCS)    
+    compute_pair_1_1_0(solution[0], solution[0], big, pairmat);
   }
 
   p2out << "\t\t\t compute 0_2_0"<<endl;
   compute_one_pdm_0_2_0(solution[0], solution[0], big, onepdm);
-  //if (dmrginp.hamiltonian() == BCS)  
-  //compute_pair_0_2_0(solution[0], solution[0], big, pairmat);  
+  if (dmrginp.hamiltonian() == BCS)  
+  compute_pair_0_2_0(solution[0], solution[0], big, pairmat);  
   p2out << "\t\t\t compute 1_1"<<endl;
   compute_one_pdm_1_1(solution[0], solution[0], big, onepdm);
-  //if (dmrginp.hamiltonian() == BCS)  
-  //compute_pair_1_1(solution[0], solution[0], big, pairmat);
+  if (dmrginp.hamiltonian() == BCS)  
+  compute_pair_1_1(solution[0], solution[0], big, pairmat);
 
   if (sweepParams.get_block_iter()  == sweepParams.get_n_iters() - 1) {
     p2out << "\t\t\t compute 0_2"<<endl;
     compute_one_pdm_0_2(solution[0], solution[0], big, onepdm);
-    //if (dmrginp.hamiltonian() == BCS)    
-    //compute_pair_0_2(solution[0], solution[0], big, pairmat);    
+    if (dmrginp.hamiltonian() == BCS)    
+    compute_pair_0_2(solution[0], solution[0], big, pairmat);    
   }
 
   accumulate_onepdm(onepdm);
   save_onepdm_binary(onepdm, state, state);
 
-  //if (dmrginp.hamiltonian() == BCS) {
-  //accumulate_onepdm(pairmat);
-  //save_pairmat_binary(pairmat, state, state);
-  //}
+  if (dmrginp.hamiltonian() == BCS) {
+  accumulate_onepdm(pairmat);
+  save_pairmat_binary(pairmat, state, state);
+  }
 
   SaveRotationMatrix (newSystem.get_sites(), rotateMatrix, state);
 

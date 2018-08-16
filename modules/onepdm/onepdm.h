@@ -24,13 +24,13 @@ void compute_one_pdm_0_2_0(StackWavefunction& wave1, StackWavefunction& wave2, c
 void compute_one_pdm_1_1_0(StackWavefunction& wave1, StackWavefunction& wave2, const StackSpinBlock& big, Matrix& onepdm);
 void compute_one_pdm_1_1(StackWavefunction& wave1, StackWavefunction& wave2, const StackSpinBlock& big, Matrix& onepdm);
 
-/*
+///*
 void compute_pair_0_2(StackWavefunction& wave1, StackWavefunction& wave2, const StackSpinBlock& big, Matrix& onepdm);
 void compute_pair_2_0_0(StackWavefunction& wave1, StackWavefunction& wave2, const StackSpinBlock& big, Matrix& onepdm);
 void compute_pair_0_2_0(StackWavefunction& wave1, StackWavefunction& wave2, const StackSpinBlock& big, Matrix& onepdm);
 void compute_pair_1_1_0(StackWavefunction& wave1, StackWavefunction& wave2, const StackSpinBlock& big, Matrix& onepdm);
 void compute_pair_1_1(StackWavefunction& wave1, StackWavefunction& wave2, const StackSpinBlock& big, Matrix& onepdm);
-*/
+//*/
 void save_onepdm_spatial_text(const Matrix& onepdm, const int &i, const int &j);
 void save_onepdm_spatial_binary(const Matrix& onepdm, const int &i, const int &j);
 void save_onepdm_binary(const Matrix& onepdm, const int &i, const int &j);
