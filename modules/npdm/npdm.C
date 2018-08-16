@@ -15,8 +15,8 @@ Sandeep Sharma and Garnet K.-L. Chan
 #include "sweep.h"
 #include "sweepgenblock.h"
 #include "Stackdensity.h"
-//#include "sweeponepdm.h"  // For legacy version of 1pdm
-//#include "sweeptwopdm.h"  // For legacy version of 2pdm
+#include "sweeponepdm.h"  // For legacy version of 1pdm
+#include "sweeptwopdm.h"  // For legacy version of 2pdm
 #include "npdm_driver.h"
 #include "nevpt2_npdm_driver.h"
 #include "pario.h"
@@ -401,6 +401,8 @@ void npdm(NpdmOrder npdm_order, bool transitionpdm)
     //For the other situation, only old or new code is suitable.
     //if(npdm_order == NPDM_PAIRMATRIX || npdm_order == NPDM_THREEPDM || npdm_order == NPDM_FOURPDM || npdm_order == NPDM_NEVPT2 ||  transitionpdm == true  || dmrginp.spinAdapted() == false || dmrginp.setStateSpecific())
     dmrginp.set_new_npdm_code();
+    
+    dmrginp.new_npdm_code() = false; // ZHC NOTE: force to use the old code!
 
     if(dmrginp.new_npdm_code()){
     if      (npdm_order == NPDM_ONEPDM) npdm_driver = boost::shared_ptr<Npdm_driver_base>( new Onepdm_driver( dmrginp.last_site() ) );
@@ -553,12 +555,13 @@ void npdm(NpdmOrder npdm_order, bool transitionpdm)
           }
         } 
         else{
-	  pout << "Old code is not available anymore "<<endl;
+	  //pout << "Old code is not available anymore "<<endl;
+	  pout << "Use the modified old code to calculate 1PDM. ZHC NOTE "<<endl;
 	  print_trace(2);
-	  //SweepGenblock::do_one(sweepParams, false, !direction, false, 0, state, state); //this will generate the cd operators                               
-          //if (npdm_order == NPDM_ONEPDM) SweepOnepdm::do_one(sweepParams, false, direction, false, 0, state);     
-          //else if (npdm_order == NPDM_TWOPDM) SweepTwopdm::do_one(sweepParams, false, direction, false, 0, state, state);
-          //else abort();
+	  SweepGenblock::do_one(sweepParams, false, !direction, false, 0, state, state); //this will generate the cd operators                               
+          if (npdm_order == NPDM_ONEPDM) SweepOnepdm::do_one(sweepParams, false, direction, false, 0, state);     
+          else if (npdm_order == NPDM_TWOPDM) SweepTwopdm::do_one(sweepParams, false, direction, false, 0, state, state);
+          else abort();
         }
       }
     }

@@ -1,1 +1,4 @@
 *.o
+*.a
+gaopt
+block.spin_adapted

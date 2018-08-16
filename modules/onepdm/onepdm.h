@@ -18,6 +18,9 @@ namespace SpinAdapted{
 
 void compute_onepdm(std::vector<StackWavefunction>& solutions, const StackSpinBlock& system, const StackSpinBlock& systemDot, const StackSpinBlock& newSystem, const StackSpinBlock& newEnvironment, const StackSpinBlock& big, const int numprocs);
 
+
+// ZHC TODO add addtional functions.
+
 void compute_one_pdm_0_2(StackWavefunction& wave1, StackWavefunction& wave2, const StackSpinBlock& big, Matrix& onepdm);
 void compute_one_pdm_2_0_0(StackWavefunction& wave1, StackWavefunction& wave2, const StackSpinBlock& big, Matrix& onepdm);
 void compute_one_pdm_0_2_0(StackWavefunction& wave1, StackWavefunction& wave2, const StackSpinBlock& big, Matrix& onepdm);

@@ -57,6 +57,9 @@ void compute_onepdm(std::vector<StackWavefunction>& wavefunctions, const StackSp
       }
 }
 
+
+// ZHC TODO add addtional functions.
+
 void compute_one_pdm_2_0_0(StackWavefunction& wave1, StackWavefunction& wave2, const StackSpinBlock& big, Matrix& onepdm)
 {
   StackSpinBlock* leftBlock = big.get_leftBlock()->get_leftBlock();
