@@ -198,6 +198,8 @@ void compute_one_pdm_1_1_0(StackWavefunction& wave1, StackWavefunction& wave2, c
   }      
 }
 
+
+// ZHC NOTE : it is actually 1_0_1 and 0_1_1 ? 
 void compute_one_pdm_1_1(StackWavefunction& wave1, StackWavefunction& wave2, const StackSpinBlock& big, Matrix& onepdm)
 {
   StackSpinBlock* leftBlock = big.get_leftBlock();
@@ -250,6 +252,7 @@ void compute_one_pdm_1_1(StackWavefunction& wave1, StackWavefunction& wave2, con
 
 }
 
+// ZHC NOTE : it is actually 0_0_2
 void compute_one_pdm_0_2(StackWavefunction& wave1, StackWavefunction& wave2, const StackSpinBlock& big, Matrix& onepdm)
 {
   if(mpigetrank() == 0) {
@@ -286,6 +289,59 @@ void compute_one_pdm_0_2(StackWavefunction& wave1, StackWavefunction& wave2, con
   }
 }
 
+
+// ZHC NOTE 1_0_1 function
+/*
+void compute_one_pdm_1_0_1(StackWavefunction& wave1, StackWavefunction& wave2, const StackSpinBlock& big, Matrix& onepdm)
+{
+  StackSpinBlock* leftBlock = big.get_leftBlock()->get_leftBlock();
+  StackSpinBlock* rightBlock = big.get_rightBlock();
+  StackSpinBlock* dotBlock = big.get_leftBlock()->get_rightBlock();
+
+
+  for (int i = 0; i < leftBlock->get_op_array(CRE).get_size(); ++i)
+  for (int j = 0; j < rightBlock->get_op_array(CRE).get_size(); ++j)
+  {
+    boost::shared_ptr<StackSparseMatrix> op1 = leftBlock->get_op_array(CRE).get_local_element(i)[0];//spin 0
+    boost::shared_ptr<StackSparseMatrix> op2 = rightBlock->get_op_array(CRE).get_local_element(j)[0];//spin 0
+    int ix = op1->get_orbs(0);
+    int jx = op2->get_orbs(0);
+
+    //now for a leftop that sits on the system block, this is done by tensortrace function
+    StackCre leftop1;
+    leftop1.set_orbs() = op1->get_orbs(); leftop1.set_orbs().push_back(op2->get_orbs(0));
+    leftop1.set_initialised() = true;
+    leftop1.set_fermion() = false;
+    leftop1.set_deltaQuantum(1, (op1->get_deltaQuantum(0)-op2->get_deltaQuantum(0))[0]);
+    leftop1.allocate(big.get_leftBlock()->get_braStateInfo(), big.get_leftBlock()->get_ketStateInfo());
+    operatorfunctions::TensorProduct(leftBlock, *op1, Transpose(*op2), big.get_leftBlock(), &(big.get_leftBlock()->get_stateInfo()), leftop1, 1.0);
+
+    StackWavefunction opw2;
+    vector<SpinQuantum> dQ = wave1.get_deltaQuantum();
+    opw2.initialise(dQ, big.get_leftBlock()->get_stateInfo(), big.get_rightBlock()->get_stateInfo(), true);
+    opw2.Clear();
+    operatorfunctions::TensorMultiply(big.get_leftBlock(), leftop1, &big, wave2, opw2, dQ[0], 1.0);
+    double sum = sqrt(2.0)*DotProduct(wave1, opw2);
+    double difference = 0.0;
+    opw2.deallocate();
+    leftop1.deallocate();
+
+    if(dmrginp.spinAdapted()) {
+      onepdm(2*ix+1, 2*jx+1) = (sum+difference)/2.0;
+      onepdm(2*ix+2, 2*jx+2) = (sum-difference)/2.0;
+      onepdm(2*jx+1, 2*ix+1) = (sum+difference)/2.0;
+      onepdm(2*jx+2, 2*ix+2) = (sum-difference)/2.0;
+    }
+    else {
+      onepdm(ix+1, jx+1) = sum/sqrt(2.0);
+      onepdm(jx+1, ix+1) = sum/sqrt(2.0);
+    }
+  }      
+}
+*/
+
+
+
 //  /*
 void compute_pair_1_1_0(StackWavefunction& wave1, StackWavefunction& wave2, const StackSpinBlock& big, Matrix& onepdm) {
   StackSpinBlock* leftBlock = big.get_leftBlock()->get_leftBlock();
@@ -309,11 +365,14 @@ void compute_pair_1_1_0(StackWavefunction& wave1, StackWavefunction& wave2, cons
     leftop1.set_fermion() = false;
     leftop1.set_deltaQuantum(1, (-op1->get_deltaQuantum(0)-op2->get_deltaQuantum(0))[0]);
     leftop1.allocate(big.get_leftBlock()->get_stateInfo());
-    operatorfunctions::TensorProduct(leftBlock, Transpose(op1), Transpose(op2), big.get_leftBlock(), &(big.get_leftBlock()->get_stateInfo()), leftop1, 1.0);
+    //operatorfunctions::TensorProduct(leftBlock, Transpose(op1), Transpose(op2), big.get_leftBlock(), &(big.get_leftBlock()->get_stateInfo()), leftop1, 1.0);
+    operatorfunctions::TensorProduct(leftBlock, Transpose(*op1), Transpose(*op2), big.get_leftBlock(), &(big.get_leftBlock()->get_stateInfo()), leftop1, 1.0);
 
     StackWavefunction opw2;
     vector<SpinQuantum> dQ = wave1.get_deltaQuantum();
-    opw2.initialise(dQ, &big, true);opw2.Clear();
+    //opw2.initialise(dQ, &big, true);opw2.Clear();
+    opw2.initialise(dQ, big.get_leftBlock()->get_stateInfo(), big.get_rightBlock()->get_stateInfo(), true);
+    opw2.Clear();
     operatorfunctions::TensorMultiply(big.get_leftBlock(), leftop1, &big, wave2, opw2, dQ[0], 1.0);
     double sum = sqrt(2.0)*DotProduct(wave1, opw2);
     opw2.deallocate();
@@ -344,7 +403,9 @@ void compute_pair_0_2(StackWavefunction& wave1, StackWavefunction& wave2, const 
     Transpose top(op);
     StackWavefunction opw2;
     vector<SpinQuantum> dQ = wave1.get_deltaQuantum();
-    opw2.initialise(dQ, &big, true);opw2.Clear();
+    //opw2.initialise(dQ, &big, true);opw2.Clear();
+    opw2.initialise(dQ, big.get_leftBlock()->get_stateInfo(), big.get_rightBlock()->get_stateInfo(), true);
+    opw2.Clear();
     operatorfunctions::TensorMultiply(rightBlock, top, &big, wave2, opw2, dQ[0], 1.0);
     double sum = sqrt(2.0)*DotProduct(wave1, opw2);
     opw2.deallocate();
@@ -382,7 +443,9 @@ void compute_pair_2_0_0(StackWavefunction& wave1, StackWavefunction& wave2, cons
 
     StackWavefunction opw2;
     vector<SpinQuantum> dQ = wave1.get_deltaQuantum();
-    opw2.initialise(dQ, &big, true);opw2.Clear();
+    //opw2.initialise(dQ, &big, true);opw2.Clear();
+    opw2.initialise(dQ, big.get_leftBlock()->get_stateInfo(), big.get_rightBlock()->get_stateInfo(), true);
+    opw2.Clear();
     operatorfunctions::TensorMultiply(big.get_leftBlock(), leftop1, &big, wave2, opw2, dQ[0], 1.0);
     double sum = sqrt(2.0)*DotProduct(wave1, opw2);
     opw2.deallocate();
@@ -414,8 +477,11 @@ void compute_pair_1_1(StackWavefunction& wave1, StackWavefunction& wave2, const 
       vector<SpinQuantum> opQ = -op1->get_deltaQuantum(0)-op2->get_deltaQuantum(0);
       StackWavefunction opw2;
       vector<SpinQuantum> dQ = wave1.get_deltaQuantum();
-      opw2.initialise(dQ, &big, true);opw2.Clear();
-      operatorfunctions::TensorMultiply(leftBlock, Transpose(op1), Transpose(op2), &big, wave2, opw2, opQ[0], 1.0);
+      //opw2.initialise(dQ, &big, true);opw2.Clear();
+      opw2.initialise(dQ, big.get_leftBlock()->get_stateInfo(), big.get_rightBlock()->get_stateInfo(), true);
+      opw2.Clear();
+      //operatorfunctions::TensorMultiply(leftBlock, Transpose(op1), Transpose(op2), &big, wave2, opw2, opQ[0], 1.0);
+      operatorfunctions::TensorMultiply(leftBlock, Transpose(*op1), Transpose(*op2), &big, wave2, opw2, opQ[0], 1.0);
       double sum = sqrt(2.0)*DotProduct(wave1, opw2);
       opw2.deallocate();
 

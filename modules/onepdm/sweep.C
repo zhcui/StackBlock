@@ -27,6 +27,7 @@ Sandeep Sharma and Garnet K.-L. Chan
 #include "onepdm.h"
 
 namespace SpinAdapted{
+/*
 void SweepOnepdm::BlockAndDecimate (SweepParams &sweepParams, StackSpinBlock& system, StackSpinBlock& newSystem, const bool &useSlater, const bool& dot_with_sys, int state)
 {
   //mcheck("at the start of block and decimate");
@@ -159,6 +160,187 @@ void SweepOnepdm::BlockAndDecimate (SweepParams &sweepParams, StackSpinBlock& sy
     if (dmrginp.hamiltonian() == BCS)    
     compute_pair_0_2(solution[0], solution[0], big, pairmat);    
   }
+
+  accumulate_onepdm(onepdm);
+  save_onepdm_binary(onepdm, state, state);
+
+  if (dmrginp.hamiltonian() == BCS) {
+  accumulate_onepdm(pairmat);
+  save_pairmat_binary(pairmat, state, state);
+  }
+
+  SaveRotationMatrix (newSystem.get_sites(), rotateMatrix, state);
+
+  solution[0].SaveWavefunctionInfo (big.get_stateInfo(), big.get_leftBlock()->get_sites(), state);
+  solution[0].deallocate();
+
+  newEnvironment.deallocate();
+  newSystem.transform_operators(rotateMatrix);
+
+  {
+    long memoryToFree = newSystem.getdata() - system.getdata();
+    long newsysmem = newSystem.memoryUsed();
+    newSystem.moveToNewMemory(system.getdata());
+    Stackmem[omprank].deallocate(newSystem.getdata()+newsysmem, memoryToFree);
+    system.clear();
+  }
+
+}
+*/
+
+void SweepOnepdm::BlockAndDecimate (SweepParams &sweepParams, StackSpinBlock& system, StackSpinBlock& newSystem, const bool &useSlater, const bool& dot_with_sys, int state)
+{
+  //mcheck("at the start of block and decimate");
+  // figure out if we are going forward or backwards
+  dmrginp.guessgenT -> start();
+  bool forward = (system.get_sites() [0] == 0);
+  StackSpinBlock systemDot;
+  StackSpinBlock envDot;
+  int systemDotStart, systemDotEnd;
+  int systemDotSize = sweepParams.get_sys_add() - 1;
+
+  if (forward)
+  {
+    systemDotStart = dmrginp.spinAdapted() ? *system.get_sites().rbegin () + 1 : (*system.get_sites().rbegin ())/2 + 1 ;
+    systemDotEnd = systemDotStart + systemDotSize;
+  }
+  else
+  {
+    systemDotStart = dmrginp.spinAdapted() ? system.get_sites()[0] - 1 : (system.get_sites()[0])/2 - 1 ;
+    systemDotEnd = systemDotStart - systemDotSize;
+  }
+  vector<int> spindotsites(2); 
+  spindotsites[0] = systemDotStart;
+  spindotsites[1] = systemDotEnd;
+  systemDot = StackSpinBlock(systemDotStart, systemDotEnd, system.get_integralIndex(), true);
+
+  StackSpinBlock environment, environmentDot, newEnvironment;
+  int environmentDotStart, environmentDotEnd, environmentStart, environmentEnd;
+
+  const int nexact = forward ? sweepParams.get_forward_starting_size() : sweepParams.get_backward_starting_size();
+  
+  newSystem.set_integralIndex() = system.get_integralIndex();
+  newSystem.default_op_components(dmrginp.direct(), false, false, true);
+  if (newSystem.has(CRE_CRE_DESCOMP)) newSystem.erase(CRE_CRE_DESCOMP);
+  if (newSystem.has(CRE_DES_DESCOMP)) newSystem.erase(CRE_DES_DESCOMP);
+  if (sweepParams.get_block_iter() != 0) {
+    if (newSystem.has(CRE_CRE)) newSystem.erase(CRE_CRE);
+    if (newSystem.has(CRE_DES)) newSystem.erase(CRE_DES);
+    if (newSystem.has(DES_DES)) newSystem.erase(DES_DES);
+    if (newSystem.has(DES_CRE)) newSystem.erase(DES_CRE);
+  }
+  if (newSystem.has(CRE_CRECOMP)) newSystem.erase(CRE_CRECOMP);
+  if (newSystem.has(CRE_DESCOMP)) newSystem.erase(CRE_DESCOMP);
+  if (newSystem.has(DES_DESCOMP)) newSystem.erase(DES_DESCOMP);
+  if (newSystem.has(DES_CRECOMP)) newSystem.erase(DES_CRECOMP);
+  if (newSystem.has(HAM)) newSystem.erase(HAM);
+
+  newSystem.setstoragetype(DISTRIBUTED_STORAGE_FOR_ONEPDM);
+  newSystem.BuildSumBlock (NO_PARTICLE_SPIN_NUMBER_CONSTRAINT, system, systemDot);
+  if (dmrginp.outputlevel() > 0) {
+    pout << "\t\t\t NewSystem block " << endl << newSystem << endl;
+    newSystem.printOperatorSummary();
+  }
+
+  
+  InitBlocks::InitNewEnvironmentBlock(environment, systemDot, newEnvironment, system, systemDot, sweepParams.current_root(), sweepParams.current_root(),
+				      sweepParams.get_sys_add(), sweepParams.get_env_add(), forward, dmrginp.direct(),
+				      sweepParams.get_onedot(), nexact, useSlater, system.get_integralIndex(), false, false, true);
+  StackSpinBlock big;
+  newSystem.set_loopblock(true);
+  system.set_loopblock(false);
+  newEnvironment.set_loopblock(false);
+  InitBlocks::InitBigBlock(newSystem, newEnvironment, big); 
+
+  const int nroots = dmrginp.nroots();
+  std::vector<StackWavefunction> solution(1);
+
+  DiagonalMatrix e;
+  solution[0].initialise(dmrginp.effective_molecule_quantum_vec(), big.get_leftBlock()->get_stateInfo(), big.get_rightBlock()->get_stateInfo(), true);
+  solution[0].Clear();
+
+  //********************
+  GuessWave::guess_wavefunctions(solution[0], e, big, sweepParams.get_guesstype(), true, state, true, 0.0); 
+
+#ifndef SERIAL
+  mpi::communicator world;
+  MPI_Bcast(solution[0].get_data(), solution[0].memoryUsed(), MPI_DOUBLE, 0, Calc);
+#endif
+
+  std::vector<Matrix> rotateMatrix;
+  StackDensityMatrix tracedMatrix(newSystem.get_stateInfo());
+  tracedMatrix.allocate(newSystem.get_stateInfo());
+  //********************
+  tracedMatrix.makedensitymatrix(solution, big, std::vector<double>(1,1.0), 0.0, 0.0, false);
+  rotateMatrix.clear();
+  if (!mpigetrank())
+    double error = makeRotateMatrix(tracedMatrix, rotateMatrix, sweepParams.get_keep_states(), sweepParams.get_keep_qstates());
+  tracedMatrix.deallocate();
+
+#ifndef SERIAL
+  mpi::broadcast(calc,rotateMatrix,0);
+#endif
+#ifdef SERIAL
+  const int numprocs = 1;
+#endif
+#ifndef SERIAL
+  const int numprocs = calc.size();
+#endif
+
+  Matrix onepdm;
+  load_onepdm_binary(onepdm, state ,state);
+  Matrix pairmat;
+  if (dmrginp.hamiltonian() == BCS)
+  load_pairmat_binary(pairmat, state ,state);
+
+  // ZHC middle site to evaluate pdm
+  int middle_site = sweepParams.get_n_iters() / 2;
+
+  //if (sweepParams.get_block_iter() == 0) {
+  if (sweepParams.get_block_iter() == middle_site) {
+    
+    ////this is inface a combination of  2_0_0, 1_1_0 and 0_2_0
+    p2out << "\t\t\t Evaluate 1pdm at middle site! ZHC NOTE "<<endl;
+    p2out << "\t\t\t compute 2_0_0"<<endl;
+    compute_one_pdm_2_0_0(solution[0], solution[0], big, onepdm);
+    if (dmrginp.hamiltonian() == BCS)
+    compute_pair_2_0_0(solution[0], solution[0], big, pairmat);
+    p2out << "\t\t\t compute 1_1_0"<<endl;
+    compute_one_pdm_1_1_0(solution[0], solution[0], big, onepdm);
+    if (dmrginp.hamiltonian() == BCS)    
+    compute_pair_1_1_0(solution[0], solution[0], big, pairmat);
+    
+    p2out << "\t\t\t compute 0_2_0"<<endl;
+    compute_one_pdm_0_2_0(solution[0], solution[0], big, onepdm);
+    //if (dmrginp.hamiltonian() == BCS)  
+    //compute_pair_0_2_0(solution[0], solution[0], big, pairmat);  
+    p2out << "\t\t\t compute 1_1"<<endl;
+    compute_one_pdm_1_1(solution[0], solution[0], big, onepdm);
+    if (dmrginp.hamiltonian() == BCS)  
+    compute_pair_1_1(solution[0], solution[0], big, pairmat);
+    
+    p2out << "\t\t\t compute 0_2"<<endl;
+    compute_one_pdm_0_2(solution[0], solution[0], big, onepdm);
+    if (dmrginp.hamiltonian() == BCS)    
+    compute_pair_0_2(solution[0], solution[0], big, pairmat);    
+  }
+  /*
+  p2out << "\t\t\t compute 0_2_0"<<endl;
+  compute_one_pdm_0_2_0(solution[0], solution[0], big, onepdm);
+  if (dmrginp.hamiltonian() == BCS)  
+  compute_pair_0_2_0(solution[0], solution[0], big, pairmat);  
+  p2out << "\t\t\t compute 1_1"<<endl;
+  compute_one_pdm_1_1(solution[0], solution[0], big, onepdm);
+  if (dmrginp.hamiltonian() == BCS)  
+  compute_pair_1_1(solution[0], solution[0], big, pairmat);
+
+  if (sweepParams.get_block_iter()  == sweepParams.get_n_iters() - 1) {
+    p2out << "\t\t\t compute 0_2"<<endl;
+    compute_one_pdm_0_2(solution[0], solution[0], big, onepdm);
+    if (dmrginp.hamiltonian() == BCS)    
+    compute_pair_0_2(solution[0], solution[0], big, pairmat);    
+  }
+  */
 
   accumulate_onepdm(onepdm);
   save_onepdm_binary(onepdm, state, state);
