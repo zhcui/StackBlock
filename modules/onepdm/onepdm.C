@@ -366,7 +366,8 @@ void compute_pair_1_1(StackWavefunction& wave1, StackWavefunction& wave2, const 
       opw2.initialise(dQ, big.get_leftBlock()->get_stateInfo(), big.get_rightBlock()->get_stateInfo(), true);
       opw2.Clear();
       //operatorfunctions::TensorMultiply(leftBlock, Transpose(op1), Transpose(op2), &big, wave2, opw2, opQ[0], 1.0);
-      operatorfunctions::TensorMultiply(leftBlock, Transpose(*op1), Transpose(*op2), &big, wave2, opw2, opQ[0], 1.0);
+      //operatorfunctions::TensorMultiply(leftBlock, Transpose(*op1), Transpose(*op2), &big, wave2, opw2, opQ[0], 1.0);
+      operatorfunctions::TensorMultiply(leftBlock, Transpose(*op1), Transpose(*op2), &big, wave2, &opw2, opQ[0], 1.0);
       double sum = sqrt(2.0)*DotProduct(wave1, opw2);
       opw2.deallocate();
 

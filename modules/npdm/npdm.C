@@ -402,8 +402,8 @@ void npdm(NpdmOrder npdm_order, bool transitionpdm)
     //if(npdm_order == NPDM_PAIRMATRIX || npdm_order == NPDM_THREEPDM || npdm_order == NPDM_FOURPDM || npdm_order == NPDM_NEVPT2 ||  transitionpdm == true  || dmrginp.spinAdapted() == false || dmrginp.setStateSpecific())
     dmrginp.set_new_npdm_code();
     
-    dmrginp.new_npdm_code() = false; // ZHC NOTE: force to use the old code!
-
+    //dmrginp.new_npdm_code() = false; // ZHC NOTE: force to use the old code!
+/*
     if(dmrginp.new_npdm_code()){
     if      (npdm_order == NPDM_ONEPDM) npdm_driver = boost::shared_ptr<Npdm_driver_base>( new Onepdm_driver( dmrginp.last_site() ) );
     else if (npdm_order == NPDM_TWOPDM) npdm_driver = boost::shared_ptr<Npdm_driver_base>( new Twopdm_driver( dmrginp.last_site() ) );
@@ -413,6 +413,7 @@ void npdm(NpdmOrder npdm_order, bool transitionpdm)
     //else if (npdm_order == NPDM_PAIRMATRIX) npdm_driver = boost::shared_ptr<Npdm_driver_base>( new Pairpdm_driver( dmrginp.last_site() ) );
     else abort();
     }
+*/
   }
 
   if (dmrginp.specificpdm().size()!=0) {
@@ -497,8 +498,8 @@ void npdm(NpdmOrder npdm_order, bool transitionpdm)
     sweepParams = sweep_copy; direction = direction_copy; restartsize = restartsize_copy;
 
     dmrginp.setimplicitTranspose() = false;
-    if (dmrginp.new_npdm_code())
-      SweepGenblock::do_one(sweepParams, false, !direction, false, 0, -1, -1); //this will generate the cd operators                               
+//    if (dmrginp.new_npdm_code())
+//      SweepGenblock::do_one(sweepParams, false, !direction, false, 0, -1, -1); //this will generate the cd operators                               
 
     if(!transitionpdm )
       dmrginp.setimplicitTranspose() = true;
@@ -539,7 +540,8 @@ void npdm(NpdmOrder npdm_order, bool transitionpdm)
     else {
       for (int state=0; state<dmrginp.nroots(); state++) {
         sweepParams = sweep_copy; direction = direction_copy; restartsize = restartsize_copy;
-        if ( dmrginp.new_npdm_code() ) {
+        //if ( dmrginp.new_npdm_code() ) {
+        if ( false ) {
           Timer timerX;
           npdm_driver->clear();
           npdm_do_one_sweep(*npdm_driver, sweepParams, false, direction, false, 0, state,state);
@@ -557,10 +559,10 @@ void npdm(NpdmOrder npdm_order, bool transitionpdm)
         else{
 	  //pout << "Old code is not available anymore "<<endl;
 	  pout << "Use the modified old code to calculate 1PDM. ZHC NOTE "<<endl;
-	  print_trace(2);
+	  //print_trace(2);
 	  SweepGenblock::do_one(sweepParams, false, !direction, false, 0, state, state); //this will generate the cd operators                               
           if (npdm_order == NPDM_ONEPDM) SweepOnepdm::do_one(sweepParams, false, direction, false, 0, state);     
-          else if (npdm_order == NPDM_TWOPDM) SweepTwopdm::do_one(sweepParams, false, direction, false, 0, state, state);
+          //else if (npdm_order == NPDM_TWOPDM) SweepTwopdm::do_one(sweepParams, false, direction, false, 0, state, state);
           else abort();
         }
       }
