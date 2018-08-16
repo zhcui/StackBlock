@@ -16,7 +16,7 @@ Sandeep Sharma and Garnet K.-L. Chan
 #include "sweepgenblock.h"
 #include "Stackdensity.h"
 #include "sweeponepdm.h"  // For legacy version of 1pdm
-#include "sweeptwopdm.h"  // For legacy version of 2pdm
+//#include "sweeptwopdm.h"  // For legacy version of 2pdm
 #include "npdm_driver.h"
 #include "nevpt2_npdm_driver.h"
 #include "pario.h"
