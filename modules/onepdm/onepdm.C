@@ -116,18 +116,18 @@ void compute_pair_2_0_0(StackWavefunction& wave1, StackWavefunction& wave2, cons
     int ix = op->get_orbs(0);
     int jx = op->get_orbs(1);
 
-    //Transpose top(op);
+    StackTransposeview top(op);
     StackCre leftop1;
-    //leftop1.set_orbs() = top.get_orbs(); 
-    leftop1.set_orbs() = op->get_orbs(); 
+    leftop1.set_orbs() = top.get_orbs(); 
+    //leftop1.set_orbs() = op->get_orbs(); 
     leftop1.set_initialised() = true;
     leftop1.set_fermion() = false;
-    //leftop1.set_deltaQuantum(1, top.get_deltaQuantum(0));
-    leftop1.set_deltaQuantum(1, op->get_deltaQuantum(0));
+    leftop1.set_deltaQuantum(1, top.get_deltaQuantum(0));
+    //leftop1.set_deltaQuantum(1, op->get_deltaQuantum(0));
     leftop1.allocate(big.get_leftBlock()->get_stateInfo());
     //leftop1.allocate(big.get_leftBlock()->get_braStateInfo(), big.get_leftBlock()->get_ketStateInfo());
-    //operatorfunctions::TensorTrace(leftBlock, top, big.get_leftBlock(), &(big.get_leftBlock()->get_stateInfo()), leftop1);
-    operatorfunctions::TensorTrace(leftBlock, Transpose(*op), big.get_leftBlock(), &(big.get_leftBlock()->get_stateInfo()), leftop1);
+    operatorfunctions::TensorTrace(leftBlock, top, big.get_leftBlock(), &(big.get_leftBlock()->get_stateInfo()), leftop1);
+    //operatorfunctions::TensorTrace(leftBlock, Transpose(*op), big.get_leftBlock(), &(big.get_leftBlock()->get_stateInfo()), leftop1);
 
     StackWavefunction opw2;
     vector<SpinQuantum> dQ = wave1.get_deltaQuantum();
@@ -137,6 +137,7 @@ void compute_pair_2_0_0(StackWavefunction& wave1, StackWavefunction& wave2, cons
     operatorfunctions::TensorMultiply(big.get_leftBlock(), leftop1, &big, wave2, opw2, dQ[0], 1.0);
     double sum = sqrt(2.0)*DotProduct(wave1, opw2);
     opw2.deallocate();
+    leftop1.deallocate();
 
     if(dmrginp.spinAdapted()) {
       pout << "BCS with spin adaption not implemented yet." << endl;
@@ -277,7 +278,7 @@ void compute_pair_1_1_0(StackWavefunction& wave1, StackWavefunction& wave2, cons
     operatorfunctions::TensorMultiply(big.get_leftBlock(), leftop1, &big, wave2, opw2, dQ[0], 1.0);
     double sum = sqrt(2.0)*DotProduct(wave1, opw2);
     opw2.deallocate();
-    //leftop1.deallocate();
+    leftop1.deallocate();
 
     if(dmrginp.spinAdapted()) {
       pout << "BCS with spin adaption not implemented yet." << endl;
@@ -431,14 +432,14 @@ void compute_pair_0_2(StackWavefunction& wave1, StackWavefunction& wave2, const 
     int ix = op->get_orbs(0);
     int jx = op->get_orbs(1);
 
-    //Transpose top(op);
+    StackTransposeview top(op);
     StackWavefunction opw2;
     vector<SpinQuantum> dQ = wave1.get_deltaQuantum();
     //opw2.initialise(dQ, &big, true);opw2.Clear();
     opw2.initialise(dQ, big.get_leftBlock()->get_stateInfo(), big.get_rightBlock()->get_stateInfo(), true);
     opw2.Clear();
-    //operatorfunctions::TensorMultiply(rightBlock, top, &big, wave2, opw2, dQ[0], 1.0);
-    operatorfunctions::TensorMultiply(rightBlock, Transpose(*op), &big, wave2, opw2, dQ[0], 1.0);
+    operatorfunctions::TensorMultiply(rightBlock, top, &big, wave2, opw2, dQ[0], 1.0);
+    //operatorfunctions::TensorMultiply(rightBlock, Transpose(*op), &big, wave2, opw2, dQ[0], 1.0);
     double sum = sqrt(2.0)*DotProduct(wave1, opw2);
     opw2.deallocate();
 

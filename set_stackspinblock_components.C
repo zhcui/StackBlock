@@ -371,7 +371,7 @@ void StackSpinBlock::default_op_components(bool direct, bool haveNormops, bool h
 
     //for hubbard model if we want to calculate twopdm we still need cd operators
     if (dmrginp.hamiltonian() != HUBBARD || dmrginp.do_npdm_ops()) {
-      if (haveNormops || dmrginp.do_npdm_ops()) {
+      if (haveNormops || dmrginp.do_npdm_ops()) { // ZHC TODO
         ops[CRE_DES] = make_new_stackop(CRE_DES, true);
         ops[CRE_CRE] = make_new_stackop(CRE_CRE, true);
         if (!implicitTranspose) {

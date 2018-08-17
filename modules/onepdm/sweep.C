@@ -218,9 +218,13 @@ void SweepOnepdm::BlockAndDecimate (SweepParams &sweepParams, StackSpinBlock& sy
   int environmentDotStart, environmentDotEnd, environmentStart, environmentEnd;
 
   const int nexact = forward ? sweepParams.get_forward_starting_size() : sweepParams.get_backward_starting_size();
-  
+ 
+  //printf("ZHC TEST LABEL");
+  pout << "ZHC TEST LABEL 1 " << endl;
+
   newSystem.set_integralIndex() = system.get_integralIndex();
   newSystem.default_op_components(dmrginp.direct(), false, false, true);
+  /*
   if (newSystem.has(CRE_CRE_DESCOMP)) newSystem.erase(CRE_CRE_DESCOMP);
   if (newSystem.has(CRE_DES_DESCOMP)) newSystem.erase(CRE_DES_DESCOMP);
   if (sweepParams.get_block_iter() != 0) {
@@ -234,7 +238,7 @@ void SweepOnepdm::BlockAndDecimate (SweepParams &sweepParams, StackSpinBlock& sy
   if (newSystem.has(DES_DESCOMP)) newSystem.erase(DES_DESCOMP);
   if (newSystem.has(DES_CRECOMP)) newSystem.erase(DES_CRECOMP);
   if (newSystem.has(HAM)) newSystem.erase(HAM);
-
+  */
   newSystem.setstoragetype(DISTRIBUTED_STORAGE_FOR_ONEPDM);
   newSystem.BuildSumBlock (NO_PARTICLE_SPIN_NUMBER_CONSTRAINT, system, systemDot);
   if (dmrginp.outputlevel() > 0) {
