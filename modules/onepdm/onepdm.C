@@ -589,6 +589,28 @@ void save_pairmat_text(const Matrix& pairmat, const int &i, const int &j) {
   }
 }
 
+// ZHC spin version
+/*
+void Pairpdm_container::save_npdm_text(const int &i, const int &j)
+{
+  if( mpigetrank() == 0)
+  {
+    char file[5000];
+    sprintf (file, "%s%s%d.%d%s", dmrginp.save_prefix().c_str(),"/pairmat.", i, j,".txt");
+    ofstream ofs(file);
+    ofs << pairpdm.dim1() << endl;
+    double trace = 0.0;
+    for(int k=0;k<pairpdm.dim1();++k)
+      for(int l=0;l<pairpdm.dim2();++l) {
+        ofs << boost::format("%d %d %20.14e\n") % k % l % pairpdm(k,l);
+        if ( k==l ) trace += pairpdm(k,l);
+      }
+    ofs.close();
+    pout << "Spin-orbital Pair PDM trace = " << trace << "\n";
+  }
+}
+*/
+
 void save_onepdm_spatial_text(const Matrix& onepdm, const int &i, const int &j)
 {
   //the spatial has a factor of 1/2 in front of it 

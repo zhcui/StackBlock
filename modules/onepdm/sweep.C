@@ -454,6 +454,7 @@ double SweepOnepdm::do_one(SweepParams &sweepParams, const bool &warmUp, const b
     accumulate_onepdm(pairmat);
     // FIXME write out text version
     // only <D{ia}D{jb}> is in the matrix
+    pout << "Save the pair matrix in txt format. ZHC NOTE" << endl;
     save_pairmat_text(pairmat , state, state);
   }
 
