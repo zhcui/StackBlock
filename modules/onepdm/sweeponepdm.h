@@ -17,6 +17,7 @@ namespace SpinAdapted{
   class StackSpinBlock;
 namespace SweepOnepdm
 {
+  void BlockAndDecimate_old (SweepParams &sweepParams, StackSpinBlock& system, StackSpinBlock& newSystem, const bool &useSlater, const bool& dot_with_sys, int state);
   void BlockAndDecimate (SweepParams &sweepParams, StackSpinBlock& system, StackSpinBlock& newSystem, const bool &useSlater, const bool& dot_with_sys, int state);
   double do_one(SweepParams &sweepParams, const bool &warmUp, const bool &forward, const bool &restart, const int &restartSize, int state);
 };

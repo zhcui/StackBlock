@@ -27,8 +27,7 @@ Sandeep Sharma and Garnet K.-L. Chan
 #include "onepdm.h"
 
 namespace SpinAdapted{
-/*
-void SweepOnepdm::BlockAndDecimate (SweepParams &sweepParams, StackSpinBlock& system, StackSpinBlock& newSystem, const bool &useSlater, const bool& dot_with_sys, int state)
+void SweepOnepdm::BlockAndDecimate_old (SweepParams &sweepParams, StackSpinBlock& system, StackSpinBlock& newSystem, const bool &useSlater, const bool& dot_with_sys, int state)
 {
   //mcheck("at the start of block and decimate");
   // figure out if we are going forward or backwards
@@ -61,6 +60,7 @@ void SweepOnepdm::BlockAndDecimate (SweepParams &sweepParams, StackSpinBlock& sy
   
   newSystem.set_integralIndex() = system.get_integralIndex();
   newSystem.default_op_components(dmrginp.direct(), false, false, true);
+  /*
   if (newSystem.has(CRE_CRE_DESCOMP)) newSystem.erase(CRE_CRE_DESCOMP);
   if (newSystem.has(CRE_DES_DESCOMP)) newSystem.erase(CRE_DES_DESCOMP);
   if (sweepParams.get_block_iter() != 0) {
@@ -74,7 +74,7 @@ void SweepOnepdm::BlockAndDecimate (SweepParams &sweepParams, StackSpinBlock& sy
   if (newSystem.has(DES_DESCOMP)) newSystem.erase(DES_DESCOMP);
   if (newSystem.has(DES_CRECOMP)) newSystem.erase(DES_CRECOMP);
   if (newSystem.has(HAM)) newSystem.erase(HAM);
-
+  */
   newSystem.setstoragetype(DISTRIBUTED_STORAGE_FOR_ONEPDM);
   newSystem.BuildSumBlock (NO_PARTICLE_SPIN_NUMBER_CONSTRAINT, system, systemDot);
   if (dmrginp.outputlevel() > 0) {
@@ -147,8 +147,8 @@ void SweepOnepdm::BlockAndDecimate (SweepParams &sweepParams, StackSpinBlock& sy
 
   p2out << "\t\t\t compute 0_2_0"<<endl;
   compute_one_pdm_0_2_0(solution[0], solution[0], big, onepdm);
-  if (dmrginp.hamiltonian() == BCS)  
-  compute_pair_0_2_0(solution[0], solution[0], big, pairmat);  
+  //if (dmrginp.hamiltonian() == BCS)  
+  //compute_pair_0_2_0(solution[0], solution[0], big, pairmat);  
   p2out << "\t\t\t compute 1_1"<<endl;
   compute_one_pdm_1_1(solution[0], solution[0], big, onepdm);
   if (dmrginp.hamiltonian() == BCS)  
@@ -186,7 +186,6 @@ void SweepOnepdm::BlockAndDecimate (SweepParams &sweepParams, StackSpinBlock& sy
   }
 
 }
-*/
 
 void SweepOnepdm::BlockAndDecimate (SweepParams &sweepParams, StackSpinBlock& system, StackSpinBlock& newSystem, const bool &useSlater, const bool& dot_with_sys, int state)
 {
@@ -247,7 +246,11 @@ void SweepOnepdm::BlockAndDecimate (SweepParams &sweepParams, StackSpinBlock& sy
   }
 
   
-  InitBlocks::InitNewEnvironmentBlock(environment, systemDot, newEnvironment, system, systemDot, sweepParams.current_root(), sweepParams.current_root(),
+  //InitBlocks::InitNewEnvironmentBlock(environment, systemDot, newEnvironment, system, systemDot, sweepParams.current_root(), sweepParams.current_root(),
+  //				      sweepParams.get_sys_add(), sweepParams.get_env_add(), forward, dmrginp.direct(),
+  //				      sweepParams.get_onedot(), nexact, useSlater, system.get_integralIndex(), false, false, true);
+  // ZHC comment. NOTE : to correctly read the old ops, use state (0) not current_root() (-1).
+  InitBlocks::InitNewEnvironmentBlock(environment, systemDot, newEnvironment, system, systemDot, state, state,
 				      sweepParams.get_sys_add(), sweepParams.get_env_add(), forward, dmrginp.direct(),
 				      sweepParams.get_onedot(), nexact, useSlater, system.get_integralIndex(), false, false, true);
   StackSpinBlock big;
@@ -426,6 +429,7 @@ double SweepOnepdm::do_one(SweepParams &sweepParams, const bool &warmUp, const b
       p1out << "\t\t\t Blocking and Decimating " << endl;
 
       StackSpinBlock newSystem;
+      //BlockAndDecimate_old (sweepParams, system, newSystem, warmUp, dot_with_sys, state);
       BlockAndDecimate (sweepParams, system, newSystem, warmUp, dot_with_sys, state);
       pout.precision(12);
 
