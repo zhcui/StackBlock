@@ -197,6 +197,59 @@ void compute_one_pdm_0_2_0(StackWavefunction& wave1, StackWavefunction& wave2, c
   }      
 }
 
+// ZHC add
+void compute_pair_0_2_0(StackWavefunction& wave1, StackWavefunction& wave2, const StackSpinBlock& big, Matrix& onepdm)
+{
+
+  StackSpinBlock* leftBlock = big.get_leftBlock()->get_leftBlock();
+  StackSpinBlock* rightBlock = big.get_rightBlock();
+  StackSpinBlock* dotBlock = big.get_leftBlock()->get_rightBlock();
+
+
+  for (int ij = 0; ij < dotBlock->get_op_array(CRE_CRE).get_size(); ++ij)
+  {
+    boost::shared_ptr<StackSparseMatrix> op = dotBlock->get_op_array(CRE_CRE).get_local_element(ij)[0];//spin 0
+    int ix = op->get_orbs(0);
+    int jx = op->get_orbs(1);
+
+    //now for a leftop that sits on the system block, this is done by tensortrace function
+    StackTransposeview top(op);
+    StackCre leftop1;
+    leftop1.set_orbs() = top.get_orbs(); 
+    //StackCre leftop1;
+    //leftop1.set_orbs() = op->get_orbs(); 
+    leftop1.set_initialised() = true;
+    leftop1.set_fermion() = false;
+    //leftop1.set_deltaQuantum(1, op->get_deltaQuantum(0));
+    leftop1.set_deltaQuantum(1, top.get_deltaQuantum(0));
+    leftop1.allocate(big.get_leftBlock()->get_braStateInfo(), big.get_leftBlock()->get_ketStateInfo());
+    //operatorfunctions::TensorTrace(dotBlock, *op, big.get_leftBlock(), &(big.get_leftBlock()->get_stateInfo()), leftop1);
+    operatorfunctions::TensorTrace(dotBlock, top, big.get_leftBlock(), &(big.get_leftBlock()->get_stateInfo()), leftop1);
+
+    StackWavefunction opw2;
+    vector<SpinQuantum> dQ = wave1.get_deltaQuantum();
+    opw2.initialise(dQ, big.get_leftBlock()->get_stateInfo(), big.get_rightBlock()->get_stateInfo(), true);
+    opw2.Clear();
+    operatorfunctions::TensorMultiply(big.get_leftBlock(), leftop1, &big, wave2, opw2, dQ[0], 1.0);
+    double sum = sqrt(2.0)*DotProduct(wave1, opw2);
+    opw2.deallocate();
+
+    leftop1.deallocate();
+    double difference = 0.0;
+
+    if(dmrginp.spinAdapted()) {
+      onepdm(2*ix+1, 2*jx+1) = (sum+difference)/2.0;
+      onepdm(2*ix+2, 2*jx+2) = (sum-difference)/2.0;
+      onepdm(2*jx+1, 2*ix+1) = (sum+difference)/2.0;
+      onepdm(2*jx+2, 2*ix+2) = (sum-difference)/2.0;
+    }
+    else {
+      onepdm(ix+1, jx+1) = -sum/sqrt(2.0);
+      onepdm(jx+1, ix+1) = sum/sqrt(2.0);
+    }
+  }      
+}
+
 void compute_one_pdm_1_1_0(StackWavefunction& wave1, StackWavefunction& wave2, const StackSpinBlock& big, Matrix& onepdm)
 {
   StackSpinBlock* leftBlock = big.get_leftBlock()->get_leftBlock();
@@ -356,8 +409,8 @@ void compute_pair_1_1(StackWavefunction& wave1, StackWavefunction& wave2, const 
       //boost::shared_ptr<StackSparseMatrix> op1 = leftBlock->get_op_array(CRE).get_local_element(i)[0]->getworkingrepresentation(leftBlock);
       boost::shared_ptr<StackSparseMatrix> op1 = leftBlock->get_op_array(CRE).get_local_element(i)[0];
       // ZHC TODO ?
-      //op1->allocate(leftBlock->get_braStateInfo(), leftBlock->get_ketStateInfo());
-      //op1->build(*leftBlock);
+      op1->allocate(leftBlock->get_braStateInfo(), leftBlock->get_ketStateInfo());
+      op1->build(*leftBlock);
       int ix = op1->get_orbs(0);
 
       vector<SpinQuantum> opQ = -op1->get_deltaQuantum(0)-op2->get_deltaQuantum(0);
@@ -371,6 +424,7 @@ void compute_pair_1_1(StackWavefunction& wave1, StackWavefunction& wave2, const 
       operatorfunctions::TensorMultiply(leftBlock, Transpose(*op1), Transpose(*op2), &big, wave2, &opw2, opQ[0], 1.0);
       double sum = sqrt(2.0)*DotProduct(wave1, opw2);
       opw2.deallocate();
+      op1->deallocate();
 
       if(dmrginp.spinAdapted()) {
         pout << "BCS with spin adaption not implemented yet." << endl;

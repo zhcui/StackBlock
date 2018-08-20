@@ -83,7 +83,7 @@ void SweepOnepdm::BlockAndDecimate_old (SweepParams &sweepParams, StackSpinBlock
   }
 
   
-  InitBlocks::InitNewEnvironmentBlock(environment, systemDot, newEnvironment, system, systemDot, sweepParams.current_root(), sweepParams.current_root(),
+  InitBlocks::InitNewEnvironmentBlock(environment, systemDot, newEnvironment, system, systemDot, state, state,
 				      sweepParams.get_sys_add(), sweepParams.get_env_add(), forward, dmrginp.direct(),
 				      sweepParams.get_onedot(), nexact, useSlater, system.get_integralIndex(), false, false, true);
   StackSpinBlock big;
@@ -147,8 +147,8 @@ void SweepOnepdm::BlockAndDecimate_old (SweepParams &sweepParams, StackSpinBlock
 
   p2out << "\t\t\t compute 0_2_0"<<endl;
   compute_one_pdm_0_2_0(solution[0], solution[0], big, onepdm);
-  //if (dmrginp.hamiltonian() == BCS)  
-  //compute_pair_0_2_0(solution[0], solution[0], big, pairmat);  
+  if (dmrginp.hamiltonian() == BCS)  
+  compute_pair_0_2_0(solution[0], solution[0], big, pairmat);  
   p2out << "\t\t\t compute 1_1"<<endl;
   compute_one_pdm_1_1(solution[0], solution[0], big, onepdm);
   if (dmrginp.hamiltonian() == BCS)  
@@ -319,8 +319,9 @@ void SweepOnepdm::BlockAndDecimate (SweepParams &sweepParams, StackSpinBlock& sy
     
     p2out << "\t\t\t compute 0_2_0"<<endl;
     compute_one_pdm_0_2_0(solution[0], solution[0], big, onepdm);
-    //if (dmrginp.hamiltonian() == BCS)  
-    //compute_pair_0_2_0(solution[0], solution[0], big, pairmat);  
+    if (dmrginp.hamiltonian() == BCS)  
+    compute_pair_0_2_0(solution[0], solution[0], big, pairmat);  
+    
     p2out << "\t\t\t compute 1_1"<<endl;
     compute_one_pdm_1_1(solution[0], solution[0], big, onepdm);
     if (dmrginp.hamiltonian() == BCS)  
@@ -401,13 +402,15 @@ double SweepOnepdm::do_one(SweepParams &sweepParams, const bool &warmUp, const b
   pout << ((forward) ? "\t\t\t Starting renormalisation sweep in forwards direction" : "\t\t\t Starting renormalisation sweep in backwards direction") << endl;
   pout << "\t\t\t ============================================================================ " << endl;
   
-  InitBlocks::InitStartingBlock (system,forward, sweepParams.current_root(), sweepParams.current_root(), sweepParams.get_forward_starting_size(), sweepParams.get_backward_starting_size(), restartSize, restart, warmUp, integralIndex);
+  //InitBlocks::InitStartingBlock (system,forward, sweepParams.current_root(), sweepParams.current_root(), sweepParams.get_forward_starting_size(), sweepParams.get_backward_starting_size(), restartSize, restart, warmUp, integralIndex);
+  InitBlocks::InitStartingBlock (system,forward, state, state, sweepParams.get_forward_starting_size(), sweepParams.get_backward_starting_size(), restartSize, restart, warmUp, integralIndex);
 
   sweepParams.set_block_iter() = 0;
  
   pout << "\t\t\t Starting block is :: " << endl << system << endl;
 
-  StackSpinBlock::store (forward, system.get_sites(), system, sweepParams.current_root(), sweepParams.current_root()); // if restart, just restoring an existing block --
+  //StackSpinBlock::store (forward, system.get_sites(), system, sweepParams.current_root(), sweepParams.current_root()); // if restart, just restoring an existing block --
+  StackSpinBlock::store (forward, system.get_sites(), system, state, state); // if restart, just restoring an existing block --
   sweepParams.savestate(forward, system.get_sites().size());
   bool dot_with_sys = true;
 
@@ -437,7 +440,8 @@ double SweepOnepdm::do_one(SweepParams &sweepParams, const bool &warmUp, const b
 
       pout << system<<endl;
       
-      StackSpinBlock::store (forward, system.get_sites(), system, sweepParams.current_root(), sweepParams.current_root());	 	
+      //StackSpinBlock::store (forward, system.get_sites(), system, sweepParams.current_root(), sweepParams.current_root());	 	
+      StackSpinBlock::store (forward, system.get_sites(), system, state, state);	 	
 
       p1out << "\t\t\t saving state " << system.get_sites().size() << endl;
       ++sweepParams.set_block_iter();
