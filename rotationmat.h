@@ -24,6 +24,7 @@ void svd_densitymat(StackSparseMatrix& tracedMatrix, std::vector<DiagonalMatrix>
 void svd_densitymat(StackSparseMatrix& tracedMatrix, std::vector<Matrix>& U, std::vector<DiagonalMatrix>& eigenMatrix, std::vector<Matrix>& V);
 void sort_weights(std::vector<DiagonalMatrix>& eigenMatrix, vector<pair<int, int> >& inorderwts, vector<vector<int> >& weightsbyquanta);
 double assign_matrix_by_dm(std::vector<Matrix>& rotatematrix, std::vector<DiagonalMatrix>& eigenmatrix, StackSparseMatrix& transformmatrix, vector<pair<int, int> >& inorderwts, vector<vector<int> >& wtsbyquanta, int totalstatesbydm, int totalstatesbyquanta, int left_block_size, int right_block_size);
+double assign_matrix_by_dm_fix_quanta(std::vector<Matrix>& rotatematrix, std::vector<DiagonalMatrix>& eigenmatrix, StackSparseMatrix& transformmatrix, vector<pair<int, int> >& inorderwts, vector<vector<int> >& wtsbyquanta, int totalstatesbydm, int totalstatesbyquanta, int left_block_size, int right_block_size);
 int PickSingleVectorAtRandom(std::vector<DiagonalMatrix>& d);
  int PickSingleNumberAtRandom(std::vector<double>& d);
 void makeRotationMatrix(std::vector<DiagonalMatrix>&d, std::vector<Matrix>& U, std::vector<Matrix>& V, std::vector<Matrix>& rotation);

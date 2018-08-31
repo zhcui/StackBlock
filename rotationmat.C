@@ -449,6 +449,136 @@ double SpinAdapted::assign_matrix_by_dm(std::vector<Matrix>& rotatematrix, std::
 }
 
 
+double SpinAdapted::assign_matrix_by_dm_fix_quanta(std::vector<Matrix>& rotatematrix, std::vector<DiagonalMatrix>& eigenmatrix, StackSparseMatrix& transformmatrix, vector<pair<int, int> >& inorderwts, vector<vector<int> >& wtsbyquanta, int totalstatesbydm, int totalstatesbyquanta, int left_block_size, int right_block_size)
+{
+  const int min_states = totalstatesbydm;
+
+  
+
+  p2out << " \t\t\t assigning a total of " << min_states << " states using the dm alone " << endl;
+  double totalnorm = 0.;
+  rotatematrix.resize(eigenmatrix.size());
+
+  for (int i = 0; i < totalstatesbydm; ++i)
+    {
+      int q = inorderwts[i].first;
+      int qs = inorderwts[i].second;
+
+      if( eigenmatrix[q].element(qs, qs) > 1.e-13)
+      {
+        if (rotatematrix[q].Ncols() == 0)
+        {
+	  rotatematrix[q].ReSize(transformmatrix(q,q).Nrows(), 1);
+	  for (int i=0; i<transformmatrix(q,q).Nrows(); i++)
+	    rotatematrix[q](i+1,1) = transformmatrix(q,q)(i+1, qs+1);
+        }
+        else
+        {
+	  Matrix bkp = rotatematrix[q];
+	  rotatematrix[q].ReSize(bkp.Nrows(), bkp.Ncols()+1);
+
+	  for (int i=0; i<bkp.Nrows(); i++)
+	    for (int j=0; j<bkp.Ncols(); j++)
+	      rotatematrix[q](i+1, j+1) = bkp(i+1, j+1);
+	  
+	  for (int i=0; i<transformmatrix(q,q).Nrows(); i++)
+	    rotatematrix[q](i+1,bkp.Ncols()+1) = transformmatrix(q,q)(i+1, qs+1);
+        }
+        vector<int>::iterator findit = find(wtsbyquanta[q].begin(), wtsbyquanta[q].end(), qs);
+        if (findit == wtsbyquanta[q].end()) { pout << " error in assign matrix " << endl; abort(); }
+        wtsbyquanta[q].erase(findit);
+        totalnorm += eigenmatrix[q].element(qs, qs);
+      }
+    }
+
+  p2out << " \t\t\t assigning a total of " << totalstatesbyquanta << " states using quanta selection " << " for a norm of " << totalnorm << endl;
+
+  int assignedbyq = 0;
+  
+  int nquanta = rotatematrix.size();
+ 
+  int totalstatesleft = 0;
+  for (int i = 0; i < nquanta; ++i)
+    {
+      totalstatesleft += wtsbyquanta[i].size();
+    }
+
+  p2out << " \t\t\t a total of " << totalstatesleft << " to be assigned " << endl;
+  
+  // now sort quanta in order of importance
+  vector<double> totalquantaweights(nquanta);
+  for (int q = 0; q < totalquantaweights.size(); ++q)
+  {
+    for (int qs = 0; qs < wtsbyquanta[q].size(); ++qs)
+      totalquantaweights[q] += eigenmatrix[q].element(qs, qs);
+  }
+  vector<int> inorderquanta(nquanta);
+  sort_data_to_indices(totalquantaweights, inorderquanta);
+  reverse(inorderquanta.begin(), inorderquanta.end());  
+
+
+  // reorder modified wtsbyquanta into a usable form
+  vector<pair<int, int> > linearwtsbyquanta;
+  int qspointer = 0;
+  
+  while(totalstatesleft)
+  {
+    for (int i = 0; i < nquanta; ++i)
+	  {
+	    int q = inorderquanta[i];
+	    if (qspointer < wtsbyquanta[q].size())
+	    {
+	      linearwtsbyquanta.push_back(make_pair(q, wtsbyquanta[q][qspointer]));
+	      --totalstatesleft;
+	    }
+	  }
+    ++qspointer;
+  }
+
+  for (int i = 0; i < totalstatesbyquanta; ++i)
+  {
+    int q = linearwtsbyquanta[i].first;
+    int qs = linearwtsbyquanta[i].second;
+    if( eigenmatrix[q].element(qs, qs) > 1.e-13)
+    {
+      if (rotatematrix[q].Ncols() == 0)
+      {
+	rotatematrix[q].ReSize(transformmatrix(q,q).Nrows(), 1);
+	for (int i=0; i<transformmatrix(q,q).Nrows(); i++)
+	  rotatematrix[q](i+1,1) = transformmatrix(q,q)(i+1, qs+1);
+	//rotatematrix[q] = transformmatrix(q, q).Column(qs + 1);
+      }
+      else
+      {
+	Matrix bkp = rotatematrix[q];
+	rotatematrix[q].ReSize(rotatematrix[q].Nrows(), rotatematrix[q].Ncols()+1);
+	for (int i=0; i<bkp.Nrows(); i++)
+	  for (int j=0; j<bkp.Ncols(); j++)
+	    rotatematrix[q](i+1, j+1) = bkp(i+1, j+1);
+	
+	for (int i=0; i<transformmatrix(q,q).Nrows(); i++)
+	  rotatematrix[q](i+1,bkp.Ncols()+1) = transformmatrix(q,q)(i+1, qs+1);
+	//rotatematrix[q] |= transformmatrix(q, q).Column(qs + 1);      
+      }
+      vector<int>::iterator findit = find(wtsbyquanta[q].begin(), wtsbyquanta[q].end(), qs);
+      if (findit == wtsbyquanta[q].end()) { pout << " error in assign matrix " << endl; abort(); }
+      wtsbyquanta[q].erase(findit);
+      totalnorm += eigenmatrix[q].element(qs, qs);
+    }
+  }
+  
+  double norm = 0.;
+  for(int i=0;i<eigenmatrix.size();++i)
+    for(int j=0;j<eigenmatrix[i].Nrows();++j)
+      norm += eigenmatrix[i].element(j, j);
+  p2out << " \t\t\t total norm: " << norm <<"  norm after truncation: "<<totalnorm<< endl;
+
+  return norm-totalnorm;
+
+  //return (1. - totalnorm/norm);
+}
+
+
 void SpinAdapted::diagonalise_dm(StackSparseMatrix& tracedMatrix, std::vector<DiagonalMatrix>& eigenMatrix)
 {
   int nquanta = tracedMatrix.nrows();
